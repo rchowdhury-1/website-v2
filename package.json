@@ -1,0 +1,23 @@
+{
+  "name": "saasify",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace apps/web run dev",
+    "dev:api": "npm --workspace apps/api run dev",
+    "dev": "concurrently -n web,api -c green,blue \"npm run dev:web\" \"npm run dev:api\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.4.0",
+    "bcrypt": "^6.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "prisma": "^7.4.0",
+    "react-router-dom": "^7.13.0",
+    "zod": "^4.3.6"
+  }
+}
