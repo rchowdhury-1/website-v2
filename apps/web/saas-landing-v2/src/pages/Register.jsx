@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { apiRequest } from "../apiClient";
 
 function Register() {
-  const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [registered, setRegistered] = useState(false);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -18,19 +18,33 @@ function Register() {
     setIsLoading(true);
 
     try {
-      const data = await apiRequest("/auth/register", {
+      await apiRequest("/auth/register", {
         method: "POST",
         body: JSON.stringify(form),
       });
-
-      localStorage.setItem("token", data.token);
-      navigate("/dashboard");
+      setRegistered(true);
     } catch (err) {
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (registered) {
+    return (
+      <div className="container">
+        <div style={{ padding: "24px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: "12px", textAlign: "center" }}>
+          <p style={{ fontSize: "2rem", margin: "0 0 8px" }}>📧</p>
+          <h2 style={{ margin: "0 0 8px" }}>Check your email</h2>
+          <p style={{ color: "var(--text-muted)", margin: "0 0 16px" }}>
+            We sent a verification link to <strong style={{ color: "var(--text)" }}>{form.email}</strong>.
+            Click the link to activate your account.
+          </p>
+          <Link to="/login" className="btn btn-primary">Go to login</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container">
