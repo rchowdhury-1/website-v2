@@ -4,21 +4,16 @@ import { apiRequest } from "../apiClient";
 function Customers() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    company: "",
-  });
-
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [form, setForm] = useState({ name: "", email: "", company: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadCustomers = async () => {
     setError("");
     setSuccess("");
     setLoading(true);
-
     try {
       const data = await apiRequest("/customers");
       setCustomers(data);
@@ -47,6 +42,7 @@ function Customers() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const newCustomer = await apiRequest("/customers", {
         method: "POST",
@@ -56,26 +52,24 @@ function Customers() {
           company: form.company.trim() || null,
         }),
       });
-
       setCustomers((prev) => [newCustomer, ...prev]);
       setForm({ name: "", email: "", company: "" });
-      setSuccess("Customer added ✅");
+      setSuccess("Customer added successfully.");
     } catch (err) {
       setError(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
     setError("");
     setSuccess("");
-
-    const ok = confirm("Delete this customer?");
-    if (!ok) return;
-
     try {
       await apiRequest(`/customers/${id}`, { method: "DELETE" });
       setCustomers((prev) => prev.filter((c) => c.id !== id));
-      setSuccess("Customer deleted ✅");
+      setConfirmDeleteId(null);
+      setSuccess("Customer deleted.");
     } catch (err) {
       setError(err.message);
     }
@@ -84,65 +78,88 @@ function Customers() {
   return (
     <div className="container" style={{ padding: "24px" }}>
       <h2>Customers</h2>
-      <p>Manage your customers (CRUD demo).</p>
+      <p style={{ color: "var(--text-muted)" }}>Manage your customers.</p>
 
-      <div style={{ margin: "16px 0" }}>
-        <form onSubmit={handleAddCustomer} className="form" style={{ display: "grid", gap: "10px", maxWidth: 520 }}>
-          <input
-            name="name"
-            placeholder="Customer name *"
-            value={form.name}
-            onChange={handleChange}
-          />
+      <form onSubmit={handleAddCustomer} className="form" style={{ maxWidth: 520, marginBottom: "24px" }}>
+        <input
+          name="name"
+          placeholder="Customer name *"
+          value={form.name}
+          onChange={handleChange}
+          disabled={isSubmitting}
+        />
+        <input
+          name="email"
+          type="email"
+          placeholder="Email (optional)"
+          value={form.email}
+          onChange={handleChange}
+          disabled={isSubmitting}
+        />
+        <input
+          name="company"
+          placeholder="Company (optional)"
+          value={form.company}
+          onChange={handleChange}
+          disabled={isSubmitting}
+        />
+        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+          {isSubmitting ? "Adding…" : "Add customer"}
+        </button>
+      </form>
 
-          <input
-            name="email"
-            type="email"
-            placeholder="Email (optional)"
-            value={form.email}
-            onChange={handleChange}
-          />
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
+      {success && <p style={{ color: "var(--success)" }}>{success}</p>}
 
-          <input
-            name="company"
-            placeholder="Company (optional)"
-            value={form.company}
-            onChange={handleChange}
-          />
-
-          <button type="submit">Add Customer</button>
-        </form>
-      </div>
-
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
-      {success && <p style={{ color: "green" }}>{success}</p>}
-
-      <hr style={{ margin: "20px 0" }} />
+      <hr style={{ margin: "20px 0", borderColor: "rgba(148,163,184,0.2)" }} />
 
       {loading ? (
-        <p>Loading customers…</p>
+        <p style={{ color: "var(--text-muted)" }}>Loading customers…</p>
       ) : customers.length === 0 ? (
-        <p>No customers yet. Add your first one above.</p>
+        <p style={{ color: "var(--text-muted)" }}>No customers yet. Add your first one above.</p>
       ) : (
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <table>
             <thead>
-              <tr style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>
-                <th style={{ padding: "10px" }}>Name</th>
-                <th style={{ padding: "10px" }}>Email</th>
-                <th style={{ padding: "10px" }}>Company</th>
-                <th style={{ padding: "10px" }}>Actions</th>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Company</th>
+                <th>Actions</th>
               </tr>
             </thead>
-
             <tbody>
               {customers.map((c) => (
-                <tr key={c.id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: "10px", fontWeight: 600 }}>{c.name}</td>
-                  <td style={{ padding: "10px" }}>{c.email || "-"}</td>
-                  <td style={{ padding: "10px" }}>{c.company || "-"}</td>
-                  <td style={{ padding: "10px" }}>
-                    <button onClick={() => handleDelete(c.id)}>Delete</button>
+                <tr key={c.id}>
+                  <td style={{ fontWeight: 600 }}>{c.name}</td>
+                  <td>{c.email || "—"}</td>
+                  <td>{c.company || "—"}</td>
+                  <td>
+                    {confirmDeleteId === c.id ? (
+                      <span style={{ display: "inline-flex", gap: "8px", alignItems: "center" }}>
+                        <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>Delete?</span>
+                        <button
+                          className="btn btn-small"
+                          style={{ background: "var(--danger)", color: "#fff", border: "none" }}
+                          onClick={() => handleDelete(c.id)}
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          className="btn btn-small btn-ghost"
+                          onClick={() => setConfirmDeleteId(null)}
+                        >
+                          Cancel
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        className="btn btn-small btn-ghost"
+                        onClick={() => setConfirmDeleteId(c.id)}
+                      >
+                        Delete
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
