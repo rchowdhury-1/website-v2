@@ -9,6 +9,7 @@ const authRoutes = require("./src/routes/Auth");
 const customersRoutes = require("./src/routes/customers");
 const billingRoutes = require("./src/routes/billing");
 const webhookRouter = require("./src/routes/webhook");
+const dashboardRoutes = require("./src/routes/dashboard");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -32,6 +33,7 @@ app.get("/", (req, res) => res.send("SaaSify API running"));
 app.use("/auth", authRoutes);
 app.use("/customers", customersRoutes);
 app.use("/billing", billingRoutes);
+app.use("/dashboard", dashboardRoutes);
 
 initDb()
   .then(() => {
