@@ -13,6 +13,7 @@ function getStripe() {
   return stripeLib(process.env.STRIPE_SECRET_KEY);
 }
 
+// POST /billing/checkout
 router.post("/checkout", requireAuth, async (req, res) => {
   const userId = req.user.userId;
 
@@ -24,13 +25,6 @@ router.post("/checkout", requireAuth, async (req, res) => {
   const priceId = process.env.STRIPE_PRICE_ID;
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 
-  console.log("Stripe checkout attempt:", {
-    email: user.email,
-    priceId,
-    frontendUrl,
-    hasKey: !!process.env.STRIPE_SECRET_KEY,
-  });
-
   try {
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
@@ -38,6 +32,8 @@ router.post("/checkout", requireAuth, async (req, res) => {
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
       customer_email: user.email,
+      // userId passed in metadata so the webhook can look up who paid
+      metadata: { userId },
       success_url: `${frontendUrl}/billing?success=1`,
       cancel_url: `${frontendUrl}/billing?canceled=1`,
     });
@@ -46,19 +42,6 @@ router.post("/checkout", requireAuth, async (req, res) => {
     console.error("Stripe error:", err);
     res.status(500).json({ error: "Stripe session create failed", details: err.message });
   }
-});
-
-router.post("/upgrade", requireAuth, async (req, res) => {
-  const userId = req.user.userId;
-
-  await pool.query("UPDATE users SET plan = 'PRO' WHERE id = $1", [userId]);
-
-  const result = await pool.query(
-    "SELECT id, name, email, plan, created_at FROM users WHERE id = $1",
-    [userId]
-  );
-
-  res.json({ success: true, user: result.rows[0] });
 });
 
 module.exports = router;
