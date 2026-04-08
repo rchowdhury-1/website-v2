@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const { z } = require("zod");
 const crypto = require("crypto");
 
-const db = require("../db");
+const { pool } = require("../db");
 const requireAuth = require("../middleware/requireAuth");
 
 const router = express.Router();
@@ -24,16 +24,17 @@ router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = registerSchema.parse(req.body);
 
-    const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(email);
-    if (existing) return res.status(409).json({ error: "Email already in use" });
+    const existing = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
+    if (existing.rows.length > 0) return res.status(409).json({ error: "Email already in use" });
 
     const passwordHash = await bcrypt.hash(password, 10);
     const userId = crypto.randomUUID();
     const createdAt = new Date().toISOString();
 
-    db.prepare(
-      "INSERT INTO users (id, name, email, password_hash, plan, created_at) VALUES (?, ?, ?, ?, ?, ?)"
-    ).run(userId, name || null, email, passwordHash, "FREE", createdAt);
+    await pool.query(
+      "INSERT INTO users (id, name, email, password_hash, plan, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
+      [userId, name || null, email, passwordHash, "FREE", createdAt]
+    );
 
     const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
     return res.json({ token });
@@ -50,7 +51,8 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = loginSchema.parse(req.body);
 
-    const user = db.prepare("SELECT id, password_hash FROM users WHERE email = ?").get(email);
+    const result = await pool.query("SELECT id, password_hash FROM users WHERE email = $1", [email]);
+    const user = result.rows[0];
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
     const ok = await bcrypt.compare(password, user.password_hash);
@@ -67,14 +69,13 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.get("/me", requireAuth, (req, res) => {
+router.get("/me", requireAuth, async (req, res) => {
   const userId = req.user.userId;
-
-  const user = db
-    .prepare("SELECT id, name, email, plan, created_at FROM users WHERE id = ?")
-    .get(userId);
-
-  return res.json(user);
+  const result = await pool.query(
+    "SELECT id, name, email, plan, created_at FROM users WHERE id = $1",
+    [userId]
+  );
+  return res.json(result.rows[0]);
 });
 
 module.exports = router;
