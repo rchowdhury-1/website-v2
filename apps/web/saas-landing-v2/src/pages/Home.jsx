@@ -50,7 +50,7 @@ function Home() {
           <p className="badge">Websites & CRM for growing businesses</p>
           <h1>
             Modern websites & custom CRM solutions
-            <span className="accent"> built for your business</span>.
+            <span className="accent"> built for your business.</span>
           </h1>
           <p className="hero-subtitle">
             I design and develop high-performing business websites, e-commerce

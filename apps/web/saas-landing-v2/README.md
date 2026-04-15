@@ -1,16 +1,76 @@
-# React + Vite
+# Rizwan Web Studio — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React frontend for the Rizwan Web Studio SaaS platform. Built with Vite and React Router.
 
-Currently, two official plugins are available:
+**Live:** https://riz-website-v2.netlify.app
+**Backend API:** https://full-stack-saas-landing-with-stripe.onrender.com
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Pages & features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Page | Route | Auth required | Description |
+|---|---|---|---|
+| Home | `/` | No | Marketing landing page with services, pricing, and CTAs |
+| Register | `/register` | No | Create an account |
+| Login | `/login` | No | Log in to existing account |
+| Dashboard | `/dashboard` | Yes | Welcome screen showing user info |
+| Customers | `/customers` | Yes | Add, view, and delete customers (CRM) |
+| Billing | `/billing` | Yes | View plan and upgrade to Pro via Stripe |
 
-## Expanding the ESLint configuration
+### Plan-based behaviour
+- Logged-out users see marketing CTAs (Get started, Log in)
+- Free plan users see upgrade prompts in pricing and billing
+- Pro plan users see dashboard links and a "You're on Pro" confirmation
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## Tech stack
+
+- React 18
+- Vite
+- React Router v6
+- Fetch API (via `src/apiClient.js`)
+- Deployed on Netlify
+
+---
+
+## Running locally
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Create a `.env` file:
+   ```
+   VITE_API_URL=http://localhost:4000
+   ```
+
+3. Start the dev server:
+   ```bash
+   npm run dev
+   ```
+
+The app will be available at `http://localhost:5173`.
+
+---
+
+## Environment variables
+
+| Variable | Description |
+|---|---|
+| `VITE_API_URL` | URL of the backend API — set to your Render URL in production |
+
+> Vite bakes env vars in at build time. After changing env vars in Netlify, always trigger a manual redeploy.
+
+---
+
+## Deploying to Netlify
+
+1. Push to GitHub
+2. Connect the repo in Netlify → set **Base directory** to `apps/web/saas-landing-v2`
+3. Set **Build command** to `npm run build`
+4. Set **Publish directory** to `dist`
+5. Add environment variable: `VITE_API_URL=https://full-stack-saas-landing-with-stripe.onrender.com`
+6. Deploy
